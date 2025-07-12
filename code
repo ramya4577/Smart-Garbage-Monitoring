@@ -1,0 +1,58 @@
+// Pin Definitions
+const int trigPin = 9;
+const int echoPin = 10;
+const int buzzerPin = 3;
+const int ledPin = 4;
+const int servoPin = 5;
+
+#include <Servo.h>
+Servo compressor;
+
+long duration;
+int distance;
+int threshold = 10; // Distance (in cm) below which the bin is considered full
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+
+  compressor.attach(servoPin);
+  compressor.write(0); // Initial position
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Trigger ultrasonic sensor
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Read echo
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // If bin is full
+  if (distance <= threshold) {
+    digitalWrite(ledPin, HIGH);
+    digitalWrite(buzzerPin, HIGH);
+
+    Serial.println("Bin is Full. Starting Compression...");
+    compressor.write(90);   // Rotate to compress
+    delay(2000);            // Hold position
+    compressor.write(0);    // Return to initial
+  } else {
+    digitalWrite(ledPin, LOW);
+    digitalWrite(buzzerPin, LOW);
+  }
+
+  delay(1000);
+}
